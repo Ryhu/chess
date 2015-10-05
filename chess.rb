@@ -164,10 +164,14 @@ class Piece
     @board = board
   end
 
+  def valid_pos(pos)
+    return false if board[pos].color == self.color || Board.in_bounds?(pos)
+    true
+  end
+
   def to_s
     " P ".colorize(:red)
   end
-
 
 end
 
@@ -191,38 +195,26 @@ class SlidingPiece < Piece
         end
       end
     possible_moves
+    end
   end
 
-  def valid_pos(pos)
-    return false if board[pos].color == self.color || Board.in_bounds?(pos)
-    true
-  end
-
-
-
-
-
-
-
-
-  #   '''
-  #   new_positions = move_dirs.map do |el|
-  #     [el[0] + self.pos[0],el[1] + self.pos[1]]
-  #   end
-  #   new_positions.select! do |position|
-  #     Board.in_bounds?(position) && board.empty?(pos)
-  #   end
-  #
-  #   possible_moves += new_positions
-  #   end
-  #
-  # end
-  # '''
 end
 
 class Rook < SlidingPiece
   def move_dirs
     [[-1, 0], [1, 0], [0, -1], [0, 1]]
+  end
+end
+
+class Bishop < SlidingPiece
+  def move_dirs
+    [[-1, -1], [1, 1], [1 -1], [-1, 1]]
+  end
+end
+
+class Queen < SlidingPiece
+  def move_dirs
+    [[-1, -1], [1, 1], [1 -1], [-1, 1][-1, 0], [1, 0], [0, -1], [0, 1]]
   end
 end
 
@@ -234,14 +226,25 @@ class King < SteppingPiece
 
 end
 
+class Knight < SteppingPiece
+
+end
+
 class Pawn < Piece
 
 end
 
 board = Board.new
-disp = Display.new(board)
-3.times do
-  disp.render
-  disp.get_input
-end
-disp.render
+board[[3,3]] = Rook.new([3,3], :black, board)
+puts board[[3,3]].moves
+
+
+
+
+# disp = Display.new(board)
+
+# 3.times do
+#   disp.render
+#   disp.get_input
+# end
+# disp.render
