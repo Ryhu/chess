@@ -7,6 +7,11 @@ end
 
 
 class Board
+
+  def self.in_bounds?(pos)
+    pos.all? { |coord| coord.between?(0, 7) }
+  end
+
   attr_reader :grid
   def initialize
     @grid = Array.new(8) {Array.new(8)}
@@ -42,7 +47,7 @@ class Board
     @grid.each_index do |row|
       @grid[row].each_index do |col|
         if start_rows.include?(row)
-          self[[row,col]] = Piece.new([row,col])
+          self[[row,col]] = Piece.new([row,col], :white, self)
         else
           self[[row, col]] = "   "
         end
@@ -111,8 +116,12 @@ class Display
   end
 
   def update_pos(coords)
-    @cursor_pos[0] += coords[0]
-    @cursor_pos[1] += coords[1]
+
+    x = @cursor_pos[0] + coords[0]
+    y = @cursor_pos[1] + coords[1]
+    if Board.in_bounds?([x, y])
+      @cursor_pos = [x, y]
+    end
   end
 
   def colors_for(x, y)
@@ -147,8 +156,8 @@ class Display
 end
 
 class Piece
-  attr_reader :pos
 
+  attr_reader :pos
   def initialize(pos, color, board)
     @pos = pos
     @color = color
@@ -159,10 +168,20 @@ class Piece
     " P ".colorize(:red)
   end
 
+
 end
 
 class SlidingPiece < Piece
+  def moves
+    moves = []
+    move_dirs.each
+  end
+end
 
+class Rook < SlidingPiece
+  def move_dirs
+    [[-1, 0], [1, 0], [0, -1], [0, 1]]
+  end
 end
 
 class SteppingPiece < Piece
