@@ -41,6 +41,7 @@ class Board
 end
 
 class Display
+
   KEYMAP = {
     " " => :space,
     "\e[A" => :up,
@@ -49,6 +50,53 @@ class Display
     "\e[D" => :left,
     "\177" => :backspace
   }
+
+  MOVES = {
+    left:  [0, -1],
+    right: [0, 1],
+    up:    [1, 0],
+    down:  [-1, 0]
+  }
+
+  def initialize(board)
+    @board = board
+    @cursor_pos = [0, 0]
+  end
+
+  def get_input
+    key = KEYMAP[read_char]
+    handle_key(key)
+  end
+
+  def handle_key(key)
+    case key
+    when :space
+      # select pos
+    when :backspace
+      # deselect pos
+    when :left, :right, :up, :down
+      update_pos(MOVES[key])
+    else
+      puts key
+    end
+  end
+
+  def update_pos(coords)
+    @cursor_pos[0] += coords[0]
+    @cursos_pos[1] += coords[1]
+  end
+
+  def colors_for(x,y)
+    if [x, y] = @cursor_pos
+      bg = :yellow
+    elsif (x + y) = odd
+      bg = :black
+    else
+      bg = :white
+    end
+    { background: bg }
+  end
+
 
 end
 
