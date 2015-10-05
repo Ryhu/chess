@@ -157,7 +157,7 @@ end
 
 class Piece
 
-  attr_reader :pos
+  attr_reader :pos, :color, :board
   def initialize(pos, color, board)
     @pos = pos
     @color = color
@@ -172,10 +172,52 @@ class Piece
 end
 
 class SlidingPiece < Piece
+
   def moves
-    moves = []
-    move_dirs.each
+    possible_moves = []
+
+    move_dirs.each do |dir|
+
+      valid_sq =  true
+      start_pos = self.pos
+      while valid_sq
+        next_pos = [start_pos[0] + dir[0], start_pos[1] + dir[1]]
+        if valid_pos?(next_pos)
+          start_pos = next_pos
+          possible_moves << next_pos
+          valid_sq = false if board[next_pos].color != self.color
+        else
+          valid_sq = false
+        end
+      end
+    possible_moves
   end
+
+  def valid_pos(pos)
+    return false if board[pos].color == self.color || Board.in_bounds?(pos)
+    true
+  end
+
+
+
+
+
+
+
+
+  #   '''
+  #   new_positions = move_dirs.map do |el|
+  #     [el[0] + self.pos[0],el[1] + self.pos[1]]
+  #   end
+  #   new_positions.select! do |position|
+  #     Board.in_bounds?(position) && board.empty?(pos)
+  #   end
+  #
+  #   possible_moves += new_positions
+  #   end
+  #
+  # end
+  # '''
 end
 
 class Rook < SlidingPiece
