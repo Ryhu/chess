@@ -31,6 +31,11 @@ class Board
     @grid[x][y] = value
   end
 
+  def is_empty?(pos)
+    # Change if empty square representation changes
+    board[pos] == " "
+  end
+
   def populate_grid
     start_rows = [0, 1, 6, 7]
 
@@ -144,13 +149,31 @@ end
 class Piece
   attr_reader :pos
 
-  def initialize(pos)
+  def initialize(pos, color, board)
     @pos = pos
+    @color = color
+    @board = board
   end
 
   def to_s
     " P ".colorize(:red)
   end
+
+end
+
+class SlidingPiece < Piece
+
+end
+
+class SteppingPiece < Piece
+
+end
+
+class King < SteppingPiece
+
+end
+
+class Pawn < Piece
 
 end
 
