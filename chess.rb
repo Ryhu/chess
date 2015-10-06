@@ -190,11 +190,11 @@ class Piece
   end
 
   def valid_pos?(pos)
+    return false unless Board.in_bounds?(pos)
     if board[pos].is_a?(Piece)
       return board[pos].color != self.color
     end
-    puts "ok"
-    Board.in_bounds?(pos)
+    true
   end
 
   def to_s
@@ -260,10 +260,7 @@ end
 class SteppingPiece < Piece
   def moves
     next_moves = move_dirs.map { |dir| [dir[0] + pos[0], dir[1] + pos[1]]  }
-    next_moves.select do |move|
-      puts valid_pos?(move)
-      valid_pos?(move)
-    end
+    next_moves.select {|move| valid_pos?(move)}
   end
 end
 
