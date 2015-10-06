@@ -37,9 +37,32 @@ class Board
     @grid[x][y] = value
   end
 
+  def king_pos(color)
+    king = @grid.flatten.select do |piece|
+      piece.is_a?(King) && piece.color == color
+    end
+    king[0].pos
+  end
+
+  def all_pieces(color)
+    @grid.flatten.select {|piece| piece.is_a?(Piece) && (piece.color == color)}
+  end
+
+  def all_pieces_moves(all_pieces)
+
+  end
+
+  def in_check?(color)
+    king_pos = king_pos(color)
+    other_color = (color == :black ? :white : :black)
+    all_pieces(other_color).any? do |piece|
+      piece.moves.include?(king_pos)
+    end
+  end
+
   def is_empty?(pos)
     # Change if empty square representation changes
-    board[pos] == " "
+    board[pos] == "   "
   end
 
   def populate_grid
@@ -322,7 +345,6 @@ class Pawn < Piece
     moves = []
     move_dirs[:diagonals].each do |diagonal|
       move = get_move_pos(diagonal)
-      p valid_diagonal?([2, 0])
       moves << move if valid_diagonal?(move)
     end
     one_forward = get_move_pos(move_dirs[:forward])
@@ -347,8 +369,8 @@ end
 
 board = Board.new
 
-board[[2,0]] = Knight.new([2,0], :white, board)
-p board[[1,1]].moves
+# board[[2,3]] = Knight.new([2,3], :white, board)
+p board.in_check?(:black)
 
 # board[[3,3]] = Bishop.new([3,3], :black, board)
 # p board[[3,3]].moves
