@@ -69,7 +69,7 @@ class Board
   def all_player_moves(color)
     all_player_moves = []
     all_pieces(color).each do |piece|
-      all_player_moves += piece.moves
+      all_player_moves += piece.all_moves unless piece.all_moves.nil?
     end
   end
 
@@ -77,14 +77,13 @@ class Board
     king_pos = king_pos(color)
     other_color = (color == :black ? :white : :black)
     all_pieces(other_color).any? do |piece|
-      piece.moves.include?(king_pos)
+      piece.all_moves.include?(king_pos)
     end
   end
 
   def checkmate?(color)
     in_check?(color) &&
     all_player_moves(color).empty?
-
   end
 
   def is_empty?(pos)
@@ -232,7 +231,8 @@ end
 
 class Piece
 
-  attr_reader :pos, :color, :board
+  attr_reader :color, :board
+  attr_accessor :pos
   def initialize(pos, color, board)
     @pos = pos
     @color = color
@@ -255,20 +255,48 @@ class Piece
     self.class.new(pos.dup, color, duped_board)
   end
 
-  def move_into_check?(pos)
-    dup_board = Board.new
-    dup_board.grid =
-
-    @grid.map
+  def check_moves
   end
 
+  def move_into_check?(new_pos)
+    dup_board = board.dup
+    dup_board[pos].move(new_pos)
+    board.in_check?(color)
+  end
 
+  def move(new_pos)
+    if moves.include?(new_pos)
+      board[pos] = "   "
+      pos = new_pos
+      board[pos] = self
+    end
+  end
 
 end
 
 class SlidingPiece < Piece
 
   def moves
+    possible_moves = []
+
+    move_dirs.each do |dir|
+      valid_sq =  true
+      start_pos = self.pos
+      while valid_sq
+        next_pos = [start_pos[0] + dir[0], start_pos[1] + dir[1]]
+        if valid_pos?(next_pos)
+          start_pos = next_pos
+          possible_moves << next_pos
+          valid_sq = false if board[next_pos].is_a?(Piece)
+        else
+          valid_sq = false
+        end
+      end
+    end
+    possible_moves.reject { |move| move_into_check?(move) }
+  end
+
+  def all_moves
     possible_moves = []
 
     move_dirs.each do |dir|
@@ -322,6 +350,11 @@ end
 
 class SteppingPiece < Piece
   def moves
+    next_moves = move_dirs.map { |dir| [dir[0] + pos[0], dir[1] + pos[1]]  }
+    next_moves.select { |move| valid_pos?(move) && !move_into_check?(move) }
+  end
+
+  def all_moves
     next_moves = move_dirs.map { |dir| [dir[0] + pos[0], dir[1] + pos[1]]  }
     next_moves.select { |move| valid_pos?(move) }
   end
@@ -381,6 +414,22 @@ class Pawn < Piece
     false
   end
 
+  def all_moves
+    moves = []
+    move_dirs[:diagonals].each do |diagonal|
+      move = get_move_pos(diagonal)
+      moves << move if valid_diagonal?(move)
+    end
+    one_forward = get_move_pos(move_dirs[:forward])
+    two_forward = get_move_pos(move_dirs[:forward2])
+    if valid_forward?(one_forward)
+      moves << one_forward
+      if valid_forward?(two_forward)
+        moves << two_forward
+      end
+    end
+  end
+
   def moves
     moves = []
     move_dirs[:diagonals].each do |diagonal|
@@ -395,7 +444,7 @@ class Pawn < Piece
         moves << two_forward
       end
     end
-    moves
+    moves.reject { |move| move_into_check?(move) }
   end
 
   def get_move_pos(direction)
@@ -408,9 +457,13 @@ class Pawn < Piece
 end
 
 board = Board.new
-
+# board[[1,0]].move([2,0])
+board[[1,5]] = "   "
+board[[1,6]] = "   "
+board[[3,7]] = Bishop.new([3,7], :white, board)
+p board.checkmate?(:black)
 # board[[2,3]] = Knight.new([2,3], :white, board)
-p board.in_check?(:black)
+# p board.in_check?(:black)
 
 # board[[3,3]] = Bishop.new([3,3], :black, board)
 # p board[[3,3]].moves
