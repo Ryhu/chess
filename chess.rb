@@ -14,15 +14,33 @@ class Board
   end
 
   attr_reader :grid
-  def initialize
-    @grid = Array.new(8) {Array.new(8)}
-    populate_grid
+  def initialize(populate = true)
+    @grid = Array.new(8) { Array.new(8) }
+
+    populate_grid if populate
   end
 
   def move(start, end_pos)
     raise ChessError.new "No piece" if board[start].nil?
     board[end_pos] = board[start]
     board[start] = nil
+  end
+
+  def dup
+    dup_board = Board.new(false)
+    8.times do |row_index|
+      8.times do |col_index|
+
+        current_pos = [row_index, col_index]
+        if self[current_pos].is_a?(Piece)
+          dup_board[current_pos] = self[current_pos].dup(dup_board)
+        else
+          dup_board[current_pos] = "   "
+        end
+      end
+    end
+
+    dup_board
   end
 
   def [](pos)
@@ -48,8 +66,11 @@ class Board
     @grid.flatten.select {|piece| piece.is_a?(Piece) && (piece.color == color)}
   end
 
-  def all_pieces_moves(all_pieces)
-
+  def all_player_moves(color)
+    all_player_moves = []
+    all_pieces(color).each do |piece|
+      all_player_moves += piece.moves
+    end
   end
 
   def in_check?(color)
@@ -58,6 +79,12 @@ class Board
     all_pieces(other_color).any? do |piece|
       piece.moves.include?(king_pos)
     end
+  end
+
+  def checkmate?(color)
+    in_check?(color) &&
+    all_player_moves(color).empty?
+
   end
 
   def is_empty?(pos)
@@ -223,6 +250,19 @@ class Piece
   def to_s
     " P ".colorize(:red)
   end
+
+  def dup(duped_board)
+    self.class.new(pos.dup, color, duped_board)
+  end
+
+  def move_into_check?(pos)
+    dup_board = Board.new
+    dup_board.grid =
+
+    @grid.map
+  end
+
+
 
 end
 
