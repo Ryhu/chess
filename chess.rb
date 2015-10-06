@@ -1,5 +1,6 @@
 require 'colorize'
 require "io/console"
+require "byebug"
 
 class ChessError < StandardError
 
@@ -43,17 +44,41 @@ class Board
 
   def populate_grid
     start_rows = [0, 1, 6, 7]
-
-    @grid.each_index do |row|
-      @grid[row].each_index do |col|
-        if start_rows.include?(row)
-          self[[row,col]] = Piece.new([row,col], :white, self)
-        else
-          self[[row, col]] = "   "
+    @grid.each_index do |row_index|
+      if [0, 7].include?(row_index)
+        @grid[row_index] = piece_row(row_index)
+      elsif [1, 6].include?(row_index)
+        @grid[row_index] = pawn_row(row_index)
+      else
+        @grid[row_index].each_index do |col_index|
+          self[[row_index, col_index]] = "   "
         end
       end
     end
   end
+
+  def piece_row(row_index)
+    color = (row_index == 0 ? :black : :white)
+    [ Rook.new([row_index,0], color, self),
+      Knight.new([row_index,1], color, self),
+      Bishop.new([row_index,2], color, self),
+      Queen.new([row_index,3], color, self),
+      King.new([row_index,4], color, self),
+      Bishop.new([row_index,5], color, self),
+      Knight.new([row_index,6], color, self),
+      Rook.new([row_index,7], color, self),
+    ]
+  end
+
+  def pawn_row(row_index)
+    color = (row_index == 1 ? :black : :white)
+    pawn_row = []
+    8.times do |col_index|
+      pawn_row << Pawn.new([row_index,col_index], color, self)
+    end
+    pawn_row
+  end
+
 
 end
 
@@ -128,9 +153,9 @@ class Display
     if [x, y] == @cursor_pos
       bg = :yellow
     elsif (x + y).odd?
-      bg = :black
+      bg = :green
     else
-      bg = :white
+      bg = :light_red
     end
     { background: bg }
   end
@@ -164,9 +189,12 @@ class Piece
     @board = board
   end
 
-  def valid_pos(pos)
-    return false if board[pos].color == self.color || Board.in_bounds?(pos)
-    true
+  def valid_pos?(pos)
+    if board[pos].is_a?(Piece)
+      return board[pos].color != self.color
+    end
+    puts "ok"
+    Board.in_bounds?(pos)
   end
 
   def to_s
@@ -181,7 +209,6 @@ class SlidingPiece < Piece
     possible_moves = []
 
     move_dirs.each do |dir|
-
       valid_sq =  true
       start_pos = self.pos
       while valid_sq
@@ -189,13 +216,13 @@ class SlidingPiece < Piece
         if valid_pos?(next_pos)
           start_pos = next_pos
           possible_moves << next_pos
-          valid_sq = false if board[next_pos].color != self.color
+          valid_sq = false if board[next_pos].is_a?(Piece)
         else
           valid_sq = false
         end
       end
-    possible_moves
     end
+    possible_moves
   end
 
 end
@@ -204,45 +231,78 @@ class Rook < SlidingPiece
   def move_dirs
     [[-1, 0], [1, 0], [0, -1], [0, 1]]
   end
+
+  def to_s
+    " ♜ ".colorize(self.color)
+  end
 end
 
 class Bishop < SlidingPiece
   def move_dirs
-    [[-1, -1], [1, 1], [1 -1], [-1, 1]]
+    [[-1, -1], [1, 1], [1, -1], [-1, 1]]
+  end
+
+  def to_s
+    " ♝ ".colorize(self.color)
   end
 end
 
 class Queen < SlidingPiece
   def move_dirs
-    [[-1, -1], [1, 1], [1 -1], [-1, 1][-1, 0], [1, 0], [0, -1], [0, 1]]
+    [[-1, -1], [1, 1], [1, -1], [-1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]]
+  end
+
+  def to_s
+    " ♛ ".colorize(self.color)
   end
 end
 
 class SteppingPiece < Piece
-
+  def moves
+    next_moves = move_dirs.map { |dir| [dir[0] + pos[0], dir[1] + pos[1]]  }
+    next_moves.select do |move|
+      puts valid_pos?(move)
+      valid_pos?(move)
+    end
+  end
 end
 
 class King < SteppingPiece
+  def move_dirs
+    [[-1, -1], [1, 1], [1, -1], [-1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]]
+  end
 
+  def to_s
+    " ♚ ".colorize(self.color)
+  end
 end
 
 class Knight < SteppingPiece
+  def move_dirs
+    [[-1,-2],[-1,2], [1,-2], [1,2], [-2,-1], [-2,1], [2,-1], [2,1]]
+  end
 
+  def to_s
+    " ♞ ".colorize(self.color)
+  end
 end
 
 class Pawn < Piece
-
+  def to_s
+    " ♟ ".colorize(self.color)
+  end
 end
 
 board = Board.new
-board[[3,3]] = Rook.new([3,3], :black, board)
-puts board[[3,3]].moves
+p board[[0,1]].moves
+
+# board[[3,3]] = Bishop.new([3,3], :black, board)
+# p board[[3,3]].moves
 
 
-
-
+#
 # disp = Display.new(board)
-
+#
 # 3.times do
 #   disp.render
 #   disp.get_input
