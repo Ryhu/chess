@@ -260,7 +260,7 @@ end
 class SteppingPiece < Piece
   def moves
     next_moves = move_dirs.map { |dir| [dir[0] + pos[0], dir[1] + pos[1]]  }
-    next_moves.select {|move| valid_pos?(move)}
+    next_moves.select { |move| valid_pos?(move) }
   end
 end
 
@@ -285,13 +285,70 @@ class Knight < SteppingPiece
 end
 
 class Pawn < Piece
+  def move_dirs
+    if color == :white
+      move_dirs = {
+        :diagonals => [[-1, 1], [-1, -1]],
+        :forward => [-1,0],
+        :forward2 => [-2,0]
+      }
+    else
+      move_dirs = {
+        :diagonals => [[1, -1], [1, 1]],
+        :forward => [1,0],
+        :forward2 => [2,0]
+      }
+    end
+    move_dirs
+  end
+
+
+
+
+  def valid_forward?(pos)
+    return false unless Board.in_bounds?(pos)
+    !board[pos].is_a?(Piece)
+  end
+
+  def valid_diagonal?(pos)
+    return false unless Board.in_bounds?(pos)
+    if board[pos].is_a?(Piece)
+      return board[pos].color != self.color
+    end
+    false
+  end
+
+  def moves
+    moves = []
+    move_dirs[:diagonals].each do |diagonal|
+      move = get_move_pos(diagonal)
+      p valid_diagonal?([2, 0])
+      moves << move if valid_diagonal?(move)
+    end
+    one_forward = get_move_pos(move_dirs[:forward])
+    two_forward = get_move_pos(move_dirs[:forward2])
+    if valid_forward?(one_forward)
+      moves << one_forward
+      if valid_forward?(two_forward)
+        moves << two_forward
+      end
+    end
+    moves
+  end
+
+  def get_move_pos(direction)
+    [pos[0] + direction[0], pos[1] + direction[1]]
+  end
+
   def to_s
     " ♟ ".colorize(self.color)
   end
 end
 
 board = Board.new
-p board[[0,1]].moves
+
+board[[2,0]] = Knight.new([2,0], :white, board)
+p board[[1,1]].moves
 
 # board[[3,3]] = Bishop.new([3,3], :black, board)
 # p board[[3,3]].moves
